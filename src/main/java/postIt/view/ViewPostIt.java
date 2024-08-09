@@ -1,8 +1,6 @@
 package postIt.view;
 
-import postIt.DAO.ExceptionDAO;
-import postIt.DAO.PostItDAO;
-import postIt.model.PostIt;
+import postIt.controller.PostItController;
 
 import javax.swing.*;
 import java.util.Calendar;
@@ -11,8 +9,12 @@ import java.util.Date;
 public class ViewPostIt extends JFrame {
 
     private final JPanel postItArea;
+    private final PostItController controller;
 
     public ViewPostIt() {
+        controller = new PostItController();
+        postItArea = new JPanel();
+
         // Configurações da Interface
         setTitle("Interface Post It");
         setSize(510, 550);  // Aumenta o tamanho da janela para acomodar o campo de data
@@ -63,13 +65,21 @@ public class ViewPostIt extends JFrame {
         add(botao);
 
         // Área para os Post Its
-        postItArea = new JPanel();
         postItArea.setLayout(null);
         postItArea.setBounds(50, 290, 400, 200);
         add(postItArea);
 
         // Listener para o botão
-        botao.addActionListener(_ -> adicionarPostIt(campoTitulo.getText(), campoDescricao.getText(), (Date) campoData.getValue()));
+        botao.addActionListener(_ -> {
+            String title = campoTitulo.getText();
+            String description = campoDescricao.getText();
+            Date data = (Date) campoData.getValue();
+            if (controller.savePostIt(title, description, data)) {
+                adicionarPostIt(title, description, data);
+            } else {
+                JOptionPane.showMessageDialog(this, "Título e Descrição não podem estar vazios.", "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        });
 
         // Deixa todas as interações passadas visíveis
         setVisible(true);
@@ -98,22 +108,9 @@ public class ViewPostIt extends JFrame {
         postItArea.add(postIt);
         postItArea.revalidate();
         postItArea.repaint();
-
-        // Salva o Post It no banco de dados
-        salvarPostIt(titulo, descricao, data);
-    }
-
-    private void salvarPostIt(String titulo, String descricao, Date data) {
-        try {
-            PostIt postItModel = new PostIt(titulo, descricao, data);
-            PostItDAO postItDAO = new PostItDAO();
-            postItDAO.savePostIt(postItModel);
-        } catch (ExceptionDAO e) {
-            e.printStackTrace();
-        }
     }
 
     public static void main(String[] args) {
-        new ViewPostIt();
+        SwingUtilities.invokeLater(ViewPostIt::new);
     }
 }
